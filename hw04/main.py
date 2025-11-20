@@ -1,38 +1,42 @@
+"""
+HW04 — Peaceful Teams (Bipartite Check)
+
+Implement:
+- bipartition(graph)
+"""
+
 from collections import deque
 
 def bipartition(graph):
-    """Return (left_set, right_set) if bipartite; else None.
-    BFS-color all components.
+    """Return (left_set, right_set) if the graph is bipartite; else None.
+
+    The graph is an adjacency-list dict representing an undirected graph.
+    Use BFS coloring over all components:
+    - Maintain a color dict: node -> 0 or 1
+    - For each uncolored node, start BFS, color it 0
+    - Neighbors get the opposite color
+    - If a conflict is found (same-color neighbors), return None
     """
+    color = {}  # node -> 0 or 1
 
-    # Nodes include keys + neighbors
-    nodes = set(graph)
-    for u in graph:
-        # Note: 'graph[u]' is the adjacency list, which is iterable
-        for v in graph.get(u, []): 
-            nodes.add(v)
+    for start in graph:
+        if start not in color:
+            color[start] = 0
+            queue = deque([start])
 
-    color = {}
+            while queue:
+                u = queue.popleft()
+                for v in graph[u]:
+                    if v not in color:
+                        color[v] = 1 - color[u]
+                        queue.append(v)
+                    else:
+                        # Same-colored neighbor → not bipartite
+                        if color[v] == color[u]:
+                            return None
 
-    # BFS on each uncolored component
-    for start in nodes:
-        if start in color:
-            continue
-        color[start] = 0
-        q = deque([start])
+    # Build the two teams (sets)
+    left = {node for node, c in color.items() if c == 0}
+    right = {node for node, c in color.items() if c == 1}
 
-        while q:
-            u = q.popleft()
-            # If a node has no adjacency list in graph, treat it as isolated.
-            for v in graph.get(u, []):
-                if v not in color:
-                    color[v] = 1 - color[u]
-                    q.append(v)
-                elif color[v] == color[u]:
-                    # Conflict: Found an edge between two nodes of the same color.
-                    return None
-
-    # Graph is bipartite. Separate nodes into two sets based on color.
-    left = {n for n, c in color.items() if c == 0}
-    right = {n for n, c in color.items() if c == 1}
     return (left, right)
